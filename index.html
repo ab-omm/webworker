@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>webworker</title>
+</head>
+<body>
+    <input type="file" accept="image/*" name="input" id="input">
+    <br>
+    <br>
+    <br>
+    <canvas id="preview">
+
+    </canvas>
+    <script type="text/javascript">
+        const $input = document.getElementById('input')
+        const $preview = document.getElementById('preview')
+        const previewContext = $preview.getContext('2d')
+        const worker = new Worker('worker.js')
+        worker.addEventListener('message', msg => {
+            const imageData = msg.data
+            previewContext.putImageData(imageData,0,0)
+        })
+
+        function applyFilter(imageData){
+            worker.postMessage(imageData, [imageData.data.buffer])
+        }
+
+        $input.addEventListener('change',(e)=>{
+            const file = e.target.files[0]
+            // fileReader.readAsDataURL(file)
+            createImageBitmap(file)
+                .then(bitmap => {
+                    let h = bitmap.height
+                    let w = bitmap.width
+                    $preview.width = w
+                    $preview.height = h
+                    previewContext.drawImage(bitmap, 0, 0)
+                    let imageData = previewContext.getImageData(0, 0, w, h)
+                    applyFilter(imageData)
+                })
+            
+        })
+    </script>
+</body>
+</html>
